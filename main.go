@@ -10,6 +10,7 @@ import (
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	reader, err := r.MultipartReader()
+	w.Header().Add("Access-Control-Allow-Origin", "*")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -34,6 +35,6 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/upload/", uploadHandler)
 	http.ListenAndServe(":8080", nil)
 }
