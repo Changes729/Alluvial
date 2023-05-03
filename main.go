@@ -36,8 +36,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/upload/", uploadHandler)
+  
 	fs := http.FileServer(http.Dir("./storage/"))
 	http.Handle("/blobs/", http.StripPrefix("/blobs/", fs))
+
+	web := http.FileServer(http.Dir("./web/"))
+	http.Handle("/", http.StripPrefix("/", web))
 
 	http.ListenAndServe(":8080", nil)
 }
