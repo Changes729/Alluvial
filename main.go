@@ -27,7 +27,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			data, _ := ioutil.ReadAll(part)
 			fmt.Printf("FormData=[%s]\n", string(data))
 		} else { // This is FileData
-			dst, _ := os.Create("./upload/" + part.FileName())
+			dst, _ := os.Create("./storage/" + part.FileName())
 			defer dst.Close()
 			io.Copy(dst, part)
 		}
