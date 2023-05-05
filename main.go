@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
+
+	"github.com/gorilla/mux"
 )
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,13 +38,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/upload/", uploadHandler)
+	r := mux.NewRouter()
 
 	fs := http.FileServer(http.Dir("./storage/"))
-	http.Handle("/blobs/", http.StripPrefix("/blobs/", fs))
-
+	markdown := http.FileServer(http.Dir("./markdown/"))
 	web := http.FileServer(http.Dir("./web/"))
-	http.Handle("/", http.StripPrefix("/", web))
 
-	http.ListenAndServe(":8080", nil)
+	fileMatcher := regexp.MustCompile(`\.[a-zA-Z]*$`)
+
+	r.HandleFunc("/upload/", uploadHandler).Methods("POST")
+	r.PathPrefix("/blobs/").Handler(http.StripPrefix("/blobs/", fs)).Methods("GET")
+	r.PathPrefix("/markdowns/").Handler(http.StripPrefix("/markdowns/", markdown)).Methods("GET")
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !fileMatcher.MatchString(r.URL.Path) {
+			http.ServeFile(w, r, "./web/index.html")
+		} else {
+			web.ServeHTTP(w, r)
+		}
+	})
+
+	http.ListenAndServe(":8080", r)
 }
