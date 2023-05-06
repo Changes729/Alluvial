@@ -18,7 +18,6 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 	router.PathPrefix("/").Handler(http.StripPrefix(prefix, fs)).Methods("GET")
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reader, err := r.MultipartReader()
-		w.Header().Add("Access-Control-Allow-Origin", "*")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
