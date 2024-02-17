@@ -21,5 +21,8 @@
 go.work
 
 # two functional dir
-storage/
-markdown/
+storage
+markdown
+web
+
+.DS_Store

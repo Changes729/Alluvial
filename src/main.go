@@ -39,7 +39,9 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 				io.Copy(dst, part)
 			}
 		}
-	}).Methods("POST")
+	}).Methods("POST").MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
+		return is_authorization(r)
+	})
 }
 
 func main() {
@@ -47,10 +49,10 @@ func main() {
 	AlluvialServer(r, "/blobs", "./storage/")
 	AlluvialServer(r, "/markdowns", "./markdown/")
 
+	r.HandleFunc("/auth/", view_basic_auth)
+
 	web := http.FileServer(http.Dir("./web/"))
-
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		fpath, _ := os.Getwd()
 		fpath += ("/web/" + r.URL.Path)
 		if _, err := os.Stat(fpath); err == nil {
@@ -59,8 +61,7 @@ func main() {
 			log.Print(err)
 			http.ServeFile(w, r, "./web/index.html")
 		}
-
-	})
+	}).Methods("GET")
 
 	http.ListenAndServe(":8080", r)
 }
