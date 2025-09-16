@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
@@ -12,11 +11,13 @@ import (
 )
 
 func AlluvialServer(r *mux.Router, prefix string, root_path string) {
-	fs := http.FileServer(http.Dir(root_path))
+	fsys := AlluvialFileSystem{http.Dir(root_path)}
+	fs := http.FileServer(fsys)
 	router := r.PathPrefix(prefix).Subrouter()
 
 	router.PathPrefix("/").Handler(http.StripPrefix(prefix, fs)).Methods("GET")
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "private")
 		reader, err := r.MultipartReader()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -53,15 +54,16 @@ func main() {
 
 	web := http.FileServer(http.Dir("./web/"))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "private")
 		fpath, _ := os.Getwd()
-		fpath += ("/web/" + r.URL.Path)
+		fpath += ("/web" + r.URL.Path)
+
 		if _, err := os.Stat(fpath); err == nil {
 			web.ServeHTTP(w, r)
 		} else {
-			log.Print(err)
 			http.ServeFile(w, r, "./web/index.html")
 		}
 	}).Methods("GET")
 
-	http.ListenAndServe(":8080", r)
+	http.ListenAndServe(":20080", r)
 }
