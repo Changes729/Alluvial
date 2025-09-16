@@ -52,7 +52,7 @@ func makeAlluvialFile(f http.File) (af AlluvialFile) {
 		data, err := io.ReadAll(f)
 		if err == nil {
 			af.md_buf = strings.TrimSpace(md_content_process(string(data)))
-			af.File.Seek(0, io.SeekStart) // Reset file offset
+			af.File.Seek(0, io.SeekStart)
 		}
 	}
 
@@ -64,11 +64,9 @@ func (f AlluvialFile) IsMarkdown() bool {
 	return strings.HasSuffix(finfo.Name(), ".md")
 }
 
-// Readdir is a wrapper around the Readdir method of the embedded File
-// that filters out all files that start with a period in their name.
 func (f AlluvialFile) Readdir(n int) (fis []fs.FileInfo, err error) {
 	files, err := f.File.Readdir(n)
-	for _, file := range files { // Filters out the dot files
+	for _, file := range files {
 		if !strings.HasPrefix(file.Name(), ".") {
 			fis = append(fis, file)
 		}
@@ -85,11 +83,11 @@ func (f AlluvialFile) Read(p []byte) (n int, err error) {
 	end := offset + int64(len(p))
 	err = nil
 
-	if offset >= content_size {
-		return 0, io.EOF
-	}
-
 	if f.IsMarkdown() {
+		if offset >= content_size {
+			return 0, io.EOF
+		}
+
 		if end > content_size {
 			end = content_size
 		}
@@ -118,17 +116,12 @@ func (f AlluvialFile) Stat() (fs.FileInfo, error) {
 	return &fs, e
 }
 
-// AlluvialFileSystem is an http.FileSystem that hides
-// hidden "dot files" from being served.
 type AlluvialFileSystem struct {
 	http.FileSystem
 }
 
-// Open is a wrapper around the Open method of the embedded FileSystem
-// that serves a 403 permission error when name has a file or directory
-// with whose name starts with a period in its path.
 func (fsys AlluvialFileSystem) Open(name string) (http.File, error) {
-	if containsDotFile(name) { // If dot file, return 403 response
+	if containsDotFile(name) {
 		return nil, fs.ErrPermission
 	}
 
