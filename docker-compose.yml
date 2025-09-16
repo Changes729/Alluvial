@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  alluvial:
+    container_name: alluvial
+    restart: unless-stopped
+    stop_grace_period: 30s
+    image: alluvial:multistage
+    volumes:
+      - ./markdown:/markdown
+      - ./web:/web
+      - ./storage:/storage
+    ports:
+      - "20080:20080"
