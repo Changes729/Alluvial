@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log/slog"
+	"main/src/api"
 	"net/http"
 	"os"
 
@@ -12,7 +14,7 @@ import (
 
 func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 	fsys := AlluvialFileSystem{http.Dir(root_path)}
-	fs := http.FileServer(fsys)
+	fs := FileServer(fsys)
 	router := r.PathPrefix(prefix).Subrouter()
 
 	router.PathPrefix("/").Handler(http.StripPrefix(prefix, fs)).Methods("GET")
@@ -46,11 +48,14 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 }
 
 func main() {
-	r := mux.NewRouter()
-	AlluvialServer(r, "/blobs", "./storage/")
-	AlluvialServer(r, "/markdowns", "./markdown/")
+	var programLevel = new(slog.LevelVar)
+	programLevel.Set(slog.LevelDebug)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: programLevel}))
+	slog.SetDefault(logger)
 
-	r.HandleFunc("/auth/", view_basic_auth)
+	r := mux.NewRouter()
+	api.Init(r)
+	AlluvialServer(r, "/markdowns", "./markdown/")
 
 	web := http.FileServer(http.Dir("./web/"))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
