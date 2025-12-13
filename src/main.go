@@ -8,6 +8,7 @@ import (
 	"main/src/api"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -19,6 +20,7 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 
 	router.PathPrefix("/").Handler(http.StripPrefix(prefix, fs)).Methods("GET")
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, prefix+"/")
 		w.Header().Set("Cache-Control", "private")
 		reader, err := r.MultipartReader()
 		if err != nil {
@@ -37,7 +39,9 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 				data, _ := ioutil.ReadAll(part)
 				fmt.Printf("FormData=[%s]\n", string(data))
 			} else { // This is FileData
-				dst, _ := os.Create(root_path + part.FileName())
+				os.MkdirAll(root_path+path, 0755)
+				fmt.Printf("FormData=[%s]\n", root_path+path)
+				dst, _ := os.Create(root_path + path + part.FileName())
 				defer dst.Close()
 				io.Copy(dst, part)
 			}
