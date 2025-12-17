@@ -46,9 +46,7 @@ func AlluvialServer(r *mux.Router, prefix string, root_path string) {
 				io.Copy(dst, part)
 			}
 		}
-	}).Methods("POST").MatcherFunc(func(r *http.Request, rm *mux.RouteMatch) bool {
-		return is_authorization(r)
-	})
+	}).Methods("POST")
 }
 
 func main() {
